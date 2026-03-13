@@ -24,7 +24,7 @@ services:
       - seccomp:unconfined
     volumes:
       - ${WS_PATH}:/home/${USER_NAME}/work
-      - ${CODEX_HOST_DIR:-~/.codex}:/tmp/.codex-host:ro
+      # Session data (persisted on host)
       - ${DATA_DIR:-./data}/.codex:/home/${USER_NAME}/.codex
 
   # ── Development environment (GPU) ──────────────────────────────

@@ -8,15 +8,7 @@ echo "Waiting for Docker daemon..."
 timeout 30 sh -c 'until docker info > /dev/null 2>&1; do sleep 1; done'
 echo "Docker daemon is ready."
 
-# ── OAuth: Copy credentials on first run (read-only mount -> bind mount) ──
-for dir in .codex; do
-    host_dir="/tmp/${dir}-host"
-    target_dir="${HOME}/${dir}"
-    if [[ -d "${host_dir}" ]] && [[ -z "$(ls -A "${target_dir}" 2>/dev/null)" ]]; then
-        cp -a "${host_dir}/." "${target_dir}/"
-        echo "Initialized ${dir} credentials from host."
-    fi
-done
+# Codex CLI uses API key only (no OAuth credential file to copy)
 
 # ── API Key: Decrypt .env.gpg if present ──
 ENV_ENC="${HOME}/work/.env.gpg"
