@@ -15,6 +15,7 @@ Docker-in-Docker (DinD) development container for OpenAI Codex CLI. Available in
 - [Authentication](#authentication)
   - [OAuth (Interactive Login)](#oauth-interactive-login)
   - [API Key (Encrypted)](#api-key-encrypted)
+- [Usage as Subtree](#usage-as-subtree)
 - [Configuration](#configuration)
 - [Smoke Tests](#smoke-tests)
 - [Architecture](#architecture)
@@ -216,6 +217,66 @@ rm .env.keys
 On container startup, if `.env.gpg` is detected in the workspace, you will be prompted for the passphrase. Decrypted keys are only held in memory as environment variables.
 
 > **Note:** `.env` and `.env.gpg` are already in `.gitignore`.
+
+## Usage as Subtree
+
+This repo can be embedded into another project via `git subtree`, letting the project carry its own Docker dev environment.
+
+### Adding to Your Project
+
+```bash
+git subtree add --prefix=docker/codex_cli \
+    https://github.com/ycpss91255-docker/codex_cli.git main --squash
+```
+
+Example directory structure after adding:
+
+```text
+my_project/
+├── src/                         # Project source code
+├── docker/codex_cli/            # Subtree
+│   ├── build.sh
+│   ├── run.sh
+│   ├── compose.yaml
+│   ├── Dockerfile
+│   └── docker_setup_helper/
+└── ...
+```
+
+### Building and Running
+
+```bash
+cd docker/codex_cli
+./build.sh && ./run.sh
+```
+
+`build.sh` uses `--base-path` internally, so path detection works correctly regardless of where you run it from.
+
+### Workspace Detection
+
+<details>
+<summary>Click to expand detection behavior when used as subtree</summary>
+
+When the subtree sits at `my_project/docker/codex_cli/`:
+
+- **IMAGE_NAME**: directory name is `codex_cli` (not `docker_*`), so detection falls through to `.env.example` which has `IMAGE_NAME=codex_cli` — works correctly.
+- **WS_PATH**: strategy 1 (sibling scan) and strategy 2 (path traversal) may not match, so strategy 3 (fallback) resolves to the parent directory (`my_project/docker/`).
+
+**Recommendation**: after the first build, edit `WS_PATH` in `.env` to point to your actual workspace. The value is preserved on subsequent builds.
+
+</details>
+
+### Syncing with Upstream
+
+```bash
+git subtree pull --prefix=docker/codex_cli \
+    https://github.com/ycpss91255-docker/codex_cli.git main --squash
+```
+
+> **Notes**:
+> - Local modifications are tracked by git normally.
+> - `subtree pull` may produce merge conflicts if upstream changed the same files you modified locally.
+> - Do **not** modify `docker_setup_helper/` inside the subtree — it is managed by the env repo's own subtree.
 
 ## Configuration
 
