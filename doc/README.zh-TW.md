@@ -17,7 +17,7 @@ OpenAI Codex CLI 的 Docker-in-Docker（DinD）開發容器，提供 CPU 與 NVI
   - [API 金鑰（加密）](#api-金鑰加密)
 - [作為 Subtree 使用](#作為-subtree-使用)
 - [設定](#設定)
-- [煙霧測試](#煙霧測試)
+- [smoke test](#smoke test)
 - [架構](#架構)
   - [Dockerfile 階段](#dockerfile-階段)
   - [Compose 服務](#compose-服務)
@@ -42,25 +42,25 @@ OpenAI Codex CLI 的 Docker-in-Docker（DinD）開發容器，提供 CPU 與 NVI
 ```mermaid
 graph TB
     subgraph Host
-        H_OAuth["~/.codex<br/>(OAuth credentials)"]
-        H_WS["Workspace<br/>(WS_PATH)"]
-        H_Data["Data Directory<br/>(agent_* or ./data/)"]
+        H_OAuth["~/.codex<br/>(OAuth 憑證)"]
+        H_WS["工作區<br/>(WS_PATH)"]
+        H_Data["資料目錄<br/>(agent_* or ./data/)"]
     end
 
     subgraph "Container (DinD)"
         EP["entrypoint.sh"]
-        DinD["dockerd<br/>(isolated)"]
+        DinD["dockerd<br/>(隔離)"]
         Codex["Codex CLI"]
         Tools["git, python3, jq,<br/>ripgrep, make, cmake..."]
 
-        EP -->|"1. start"| DinD
-        EP -->|"2. copy credentials<br/>(first run)"| Codex
-        EP -->|"3. decrypt API keys<br/>(if .env.gpg)"| Tools
+        EP -->|"1. 啟動"| DinD
+        EP -->|"2. 複製憑證<br/>（首次執行）"| Codex
+        EP -->|"3. 解密 API 金鑰<br/>（如有 .env.gpg）"| Tools
     end
 
-    H_OAuth -->|"read-only mount"| EP
-    H_WS -->|"bind mount<br/>~/work"| Tools
-    H_Data -->|"bind mount<br/>~/.codex"| Codex
+    H_OAuth -->|"唯讀掛載"| EP
+    H_WS -->|"掛載<br/>~/work"| Tools
+    H_Data -->|"掛載<br/>~/.codex"| Codex
 
     style DinD fill:#f0f0f0,stroke:#666
     style Codex fill:#74d4a5,stroke:#333
@@ -68,11 +68,11 @@ graph TB
 
 ```mermaid
 graph LR
-    subgraph "Dockerfile Stages"
-        sys["sys<br/>user, locale, tz"]
-        base["base<br/>dev tools, docker"]
+    subgraph "Dockerfile 階段"
+        sys["sys<br/>使用者, 語系, 時區"]
+        base["base<br/>開發工具, Docker"]
         devel["devel<br/>codex cli"]
-        test["test<br/>bats smoke test"]
+        test["test<br/>Bats smoke test"]
     end
 
     sys --> base --> devel --> test
@@ -80,7 +80,7 @@ graph LR
     subgraph "Compose Services"
         S_CPU["devel<br/>(CPU, default)"]
         S_GPU["devel-gpu<br/>(NVIDIA GPU)"]
-        S_Test["test<br/>(ephemeral)"]
+        S_Test["test<br/>（暫時性）"]
     end
 
     devel -.-> S_CPU
@@ -134,7 +134,7 @@ flowchart LR
 
 ## 對話持久化
 
-對話記錄與 Session 資料透過 bind mount 持久化儲存，容器重啟後仍可保留。
+對話記錄與 Session 資料透過 掛載 持久化儲存，容器重啟後仍可保留。
 
 `run.sh` 會從專案目錄向上自動掃描是否存在 `agent_*` 目錄。若找到，資料將儲存於該目錄；否則退回使用 `./data/`。
 
@@ -290,7 +290,7 @@ git subtree pull --prefix=docker/codex_cli \
 | `WS_PATH` | 掛載至容器內 `~/work` 的主機路徑 |
 | `IMAGE_NAME` | Docker 映像名稱（預設：`codex_cli`） |
 
-## 煙霧測試
+## smoke test
 
 建置 test target 驗證環境：
 
@@ -387,7 +387,7 @@ git subtree pull --prefix=docker/codex_cli \
 | `sys` | 用戶/群組建立、語系、時區、Node.js（僅 GPU 版本） |
 | `base` | 開發工具、Python、建置工具、Docker、jq、ripgrep |
 | `devel` | Codex CLI、進入點、非 root 用戶 |
-| `test` | Bats 煙霧測試（暫時性，驗證後捨棄） |
+| `test` | Bats smoke test（暫時性，驗證後捨棄） |
 
 ### Compose 服務
 
@@ -395,7 +395,7 @@ git subtree pull --prefix=docker/codex_cli \
 |------|------|
 | `devel` | CPU 版本（預設） |
 | `devel-gpu` | 附 NVIDIA 裝置保留的 GPU 版本 |
-| `test` | 煙霧測試（以 profile 控制） |
+| `test` | smoke test（以 profile 控制） |
 
 ### 進入點流程
 

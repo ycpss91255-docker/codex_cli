@@ -17,7 +17,7 @@ OpenAI Codex CLI 用の Docker-in-Docker（DinD）開発コンテナ。CPU と N
   - [API キー（暗号化）](#api-キー暗号化)
 - [Subtree としての利用](#subtree-としての利用)
 - [設定](#設定)
-- [スモークテスト](#スモークテスト)
+- [smoke test](#smoke test)
 - [アーキテクチャ](#アーキテクチャ)
   - [Dockerfile ステージ](#dockerfile-ステージ)
   - [Compose サービス](#compose-サービス)
@@ -42,25 +42,25 @@ OpenAI Codex CLI 用の Docker-in-Docker（DinD）開発コンテナ。CPU と N
 ```mermaid
 graph TB
     subgraph Host
-        H_OAuth["~/.codex<br/>(OAuth credentials)"]
-        H_WS["Workspace<br/>(WS_PATH)"]
-        H_Data["Data Directory<br/>(agent_* or ./data/)"]
+        H_OAuth["~/.codex<br/>(OAuth 認証情報)"]
+        H_WS["ワークスペース<br/>(WS_PATH)"]
+        H_Data["データディレクトリ<br/>(agent_* or ./data/)"]
     end
 
     subgraph "Container (DinD)"
         EP["entrypoint.sh"]
-        DinD["dockerd<br/>(isolated)"]
+        DinD["dockerd<br/>(隔離)"]
         Codex["Codex CLI"]
         Tools["git, python3, jq,<br/>ripgrep, make, cmake..."]
 
-        EP -->|"1. start"| DinD
-        EP -->|"2. copy credentials<br/>(first run)"| Codex
-        EP -->|"3. decrypt API keys<br/>(if .env.gpg)"| Tools
+        EP -->|"1. 起動"| DinD
+        EP -->|"2. 認証情報をコピー<br/>（初回実行時）"| Codex
+        EP -->|"3. API キーを復号<br/>（.env.gpg がある場合）"| Tools
     end
 
-    H_OAuth -->|"read-only mount"| EP
-    H_WS -->|"bind mount<br/>~/work"| Tools
-    H_Data -->|"bind mount<br/>~/.codex"| Codex
+    H_OAuth -->|"読み取り専用マウント"| EP
+    H_WS -->|"バインドマウント<br/>~/work"| Tools
+    H_Data -->|"バインドマウント<br/>~/.codex"| Codex
 
     style DinD fill:#f0f0f0,stroke:#666
     style Codex fill:#74d4a5,stroke:#333
@@ -68,11 +68,11 @@ graph TB
 
 ```mermaid
 graph LR
-    subgraph "Dockerfile Stages"
-        sys["sys<br/>user, locale, tz"]
-        base["base<br/>dev tools, docker"]
+    subgraph "Dockerfile ステージ"
+        sys["sys<br/>ユーザー, ロケール, タイムゾーン"]
+        base["base<br/>開発ツール, Docker"]
         devel["devel<br/>codex cli"]
-        test["test<br/>bats smoke test"]
+        test["test<br/>Bats smoke test"]
     end
 
     sys --> base --> devel --> test
@@ -80,7 +80,7 @@ graph LR
     subgraph "Compose Services"
         S_CPU["devel<br/>(CPU, default)"]
         S_GPU["devel-gpu<br/>(NVIDIA GPU)"]
-        S_Test["test<br/>(ephemeral)"]
+        S_Test["test<br/>（一時的）"]
     end
 
     devel -.-> S_CPU
@@ -134,7 +134,7 @@ flowchart LR
 
 ## 会話の永続化
 
-会話履歴と Session データは bind mount により永続化され、コンテナ再起動後も保持されます。
+会話履歴と Session データは バインドマウント により永続化され、コンテナ再起動後も保持されます。
 
 `run.sh` はプロジェクトディレクトリから上方向に `agent_*` ディレクトリを自動スキャンします。見つかった場合はそのディレクトリにデータを保存し、見つからない場合は `./data/` にフォールバックします。
 
@@ -290,7 +290,7 @@ git subtree pull --prefix=docker/codex_cli \
 | `WS_PATH` | コンテナ内の `~/work` にマウントされるホストパス |
 | `IMAGE_NAME` | Docker イメージ名（デフォルト：`codex_cli`） |
 
-## スモークテスト
+## smoke test
 
 test ターゲットをビルドして環境を検証：
 
@@ -387,7 +387,7 @@ test ターゲットをビルドして環境を検証：
 | `sys` | ユーザー/グループ作成、ロケール、タイムゾーン、Node.js（GPU のみ） |
 | `base` | 開発ツール、Python、ビルドツール、Docker、jq、ripgrep |
 | `devel` | Codex CLI、エントリポイント、非 root ユーザー |
-| `test` | Bats スモークテスト（一時的、検証後に破棄） |
+| `test` | Bats smoke test（一時的、検証後に破棄） |
 
 ### Compose サービス
 
@@ -395,7 +395,7 @@ test ターゲットをビルドして環境を検証：
 |----------|------|
 | `devel` | CPU バリアント（デフォルト） |
 | `devel-gpu` | NVIDIA デバイス予約付き GPU バリアント |
-| `test` | スモークテスト（profile で制御） |
+| `test` | smoke test（profile で制御） |
 
 ### エントリポイントフロー
 
