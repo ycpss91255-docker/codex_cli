@@ -2,6 +2,8 @@
 
 # Codex CLI Docker 環境
 
+[![CI](https://github.com/ycpss91255-docker/codex_cli/actions/workflows/main.yaml/badge.svg)](https://github.com/ycpss91255-docker/codex_cli/actions/workflows/main.yaml) [![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)](../LICENSE)
+
 OpenAI Codex CLI 的 Docker-in-Docker（DinD）開發容器，提供 CPU 與 NVIDIA GPU 兩種版本。以非 root 用戶運行，並與主機的 UID/GID 相符。
 
 ## 目錄
