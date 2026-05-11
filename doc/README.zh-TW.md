@@ -235,7 +235,7 @@ my_project/
 │   ├── run.sh
 │   ├── compose.yaml
 │   ├── Dockerfile
-│   └── template/
+│   └── .base/
 └── ...
 ```
 
@@ -272,7 +272,7 @@ git subtree pull --prefix=docker/codex_cli \
 > **注意事項**：
 > - 本地修改會由 git 正常追蹤。
 > - 若上游修改了與你本地相同的檔案，`subtree pull` 可能會產生合併衝突。
-> - **不要**修改 subtree 內的 `template/` — 它由 env repo 自身的 subtree 管理。
+> - **不要**修改 subtree 內的 `.base/` — 它由 env repo 自身的 subtree 管理。
 
 ## 設定
 
@@ -306,7 +306,7 @@ git subtree pull --prefix=docker/codex_cli \
 ├── smoke/            # Bats smoke tests
 │   ├── codex_env.bats
 │   └── test_helper.bash
-├── template/   # Auto .env generator (git subtree)
+├── .base/   # Auto .env generator (git subtree)
 ├── README.md
 └── README.zh-TW.md
 ```
